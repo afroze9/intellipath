@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0"/>
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsAspireHost>true</IsAspireHost>
+        <UserSecretsId>d6363575-bf24-4a80-835c-68492b891255</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Aspire.Hosting.AppHost" Version="9.0.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Services\IntelliPath.Server\IntelliPath.Server.csproj" />
+      <ProjectReference Include="..\..\Services\IntelliPath.Studio\IntelliPath.Studio.csproj" />
+    </ItemGroup>
+
+</Project>
