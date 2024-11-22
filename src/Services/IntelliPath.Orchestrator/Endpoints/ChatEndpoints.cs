@@ -1,17 +1,41 @@
-﻿namespace IntelliPath.Orchestrator.Endpoints;
+﻿using IntelliPath.Orchestrator.Models;
+using IntelliPath.Orchestrator.Services;
+using IntelliPath.Shared.Models.Orchestrator;
+using Microsoft.AspNetCore.Mvc;
+
+namespace IntelliPath.Orchestrator.Endpoints;
 
 public static class ChatEndpoints
 {
     private const string Tag = "Chat";
-    private const string BasePath = "api/v1/chats";
+    private const string BasePath = "api/v1/chat";
     
     public static void MapChatEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet(BasePath, GenerateAsync).WithTags(Tag).WithName("Generate");
+        endpoints.MapPost(BasePath, GenerateAsync)
+            .Produces<ChatMessageModel>()
+            .WithTags(Tag)
+            .WithName("Generate");
+        
+        endpoints.MapPost(BasePath + "/title", GenerateTitleAsync)
+            .Produces<ChatMessageModel>()
+            .WithTags(Tag)
+            .WithName("GenerateTitle");
     }
     
-    private static async Task<IResult> GenerateAsync()
+    private static async Task<IResult> GenerateAsync(
+        [FromBody] CreateConversationRequestModel request,
+        IChatService chatService)
     {
-        return Results.Ok<string>("done");
+        ChatMessageModel result = await chatService.Generate(request.ToCreateConversationRequest());
+        return Results.Ok(result);
+    }
+    
+    private static async Task<IResult> GenerateTitleAsync(
+        [FromBody] string message,
+        IChatService chatService)
+    {
+        ChatMessageModel result = await chatService.GenerateTitle(message);
+        return Results.Ok(result);
     }
 }
