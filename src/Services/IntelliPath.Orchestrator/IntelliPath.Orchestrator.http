@@ -1,0 +1,6 @@
+@IntelliPath.Orchestrator_HostAddress = http://localhost:5120
+
+GET {{IntelliPath.Orchestrator_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

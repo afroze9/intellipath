@@ -1,15 +1,21 @@
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-var qdrantApiKey = builder.AddParameter("qdrantApiKey", secret: true);
+IResourceBuilder<ParameterResource> qdrantApiKey = builder.AddParameter("qdrantApiKey", secret: true);
 
 IResourceBuilder<ProjectResource> elsaServer = builder
-    .AddProject<Projects.IntelliPath_Server>("elsa-server");
+    .AddProject<Projects.IntelliPath_WorkflowServer>("elsa-server");
 
-builder.AddProject<Projects.IntelliPath_Studio>("elsa-studio")
+builder.AddProject<Projects.IntelliPath_WorkflowStudio>("elsa-studio")
     .WithExternalHttpEndpoints()
     .WithReference(elsaServer)
     .WaitFor(elsaServer);
 
-var qdrant = builder.AddQdrant("memory-db", qdrantApiKey);
+IResourceBuilder<QdrantServerResource> qdrant = builder.AddQdrant("memory-db", qdrantApiKey);
+
+builder.AddProject<Projects.IntelliPath_Orchestrator>("orchestrator")
+    .WithReference(elsaServer)
+    .WithReference(qdrant)
+    .WaitFor(elsaServer)
+    .WaitFor(qdrant);
 
 builder.Build().Run();

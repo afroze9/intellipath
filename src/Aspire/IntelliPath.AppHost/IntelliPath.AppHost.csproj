@@ -17,8 +17,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Services\IntelliPath.Server\IntelliPath.Server.csproj" />
-      <ProjectReference Include="..\..\Services\IntelliPath.Studio\IntelliPath.Studio.csproj" />
+      <ProjectReference Include="..\..\Applications\IntelliPath.WorkflowStudio\IntelliPath.WorkflowStudio.csproj" />
+      <ProjectReference Include="..\..\Services\IntelliPath.Orchestrator\IntelliPath.Orchestrator.csproj" />
+      <ProjectReference Include="..\..\Services\IntelliPath.WorkflowServer\IntelliPath.WorkflowServer.csproj" />
     </ItemGroup>
 
 </Project>
