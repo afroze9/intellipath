@@ -1,4 +1,5 @@
-﻿using IntelliPath.Orchestrator.Entities;
+﻿using IntelliPath.Orchestrator.Data;
+using IntelliPath.Orchestrator.Entities;
 using IntelliPath.Orchestrator.Models;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -6,7 +7,7 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace IntelliPath.Orchestrator.Services;
 
-public class ChatService(Kernel kernel) : IChatService
+public class ChatService(Kernel kernel, ApplicationDbContext context) : IChatService
 {
     public async Task<ChatMessageModel> Generate(CreateConversationRequest request)
     {
