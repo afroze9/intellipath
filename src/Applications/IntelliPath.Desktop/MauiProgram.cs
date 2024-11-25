@@ -34,6 +34,12 @@ public static class MauiProgram
 
 		builder.Services.AddSingleton<IAuthService, AuthService>();
 		builder.Services.AddSingleton<IGraphClientFactory, GraphClientFactory>();
+		builder.Services.AddHttpClient<IMemoryClient, MemoryClient>(client =>
+		{
+		    client.BaseAddress = new Uri("https://localhost:7019");
+		});
+		
+		
 
 		builder.Services.AddFluentUIComponents();
 #if DEBUG

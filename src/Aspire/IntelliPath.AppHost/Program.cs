@@ -10,7 +10,9 @@ builder.AddProject<Projects.IntelliPath_WorkflowStudio>("elsa-studio")
     .WithReference(elsaServer)
     .WaitFor(elsaServer);
 
-IResourceBuilder<QdrantServerResource> qdrant = builder.AddQdrant("memory-db", qdrantApiKey);
+IResourceBuilder<QdrantServerResource> qdrant = builder
+    .AddQdrant("memory-db", qdrantApiKey)
+    .WithLifetime(ContainerLifetime.Persistent);
 
 builder.AddProject<Projects.IntelliPath_Orchestrator>("orchestrator")
     .WithReference(elsaServer)

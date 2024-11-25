@@ -1,5 +1,6 @@
 using IntelliPath.Orchestrator.Data;
 using IntelliPath.Orchestrator.Endpoints;
+using IntelliPath.Orchestrator.Entities.Vector;
 using IntelliPath.Orchestrator.Plugins;
 using IntelliPath.Orchestrator.Services;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IGraphClientFactory, GraphClientFactory>();
+builder.Services.AddSingleton<IMemoryService, MemoryService>();
+builder.AddQdrantClient("memory-db");
+builder.Services.AddVectorStoreTextSearch<Memory>();
+builder.Services.AddQdrantVectorStore(serviceId: "memory-db");
 
 builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<CalendarPlugin>(serviceProvider: sp));
 builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<DateTimePlugin>(serviceProvider: sp));
@@ -41,5 +46,7 @@ if (app.Environment.IsDevelopment())
 }
 app.MapDefaultEndpoints();
 app.MapChatEndpoints();
+app.MapMemoryEndpoints();
 
 app.Run();
+
