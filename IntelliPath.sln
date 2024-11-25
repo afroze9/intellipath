@@ -31,13 +31,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder", "SolutionF
 		Directory.Build.Props = Directory.Build.Props
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntelliPath.Desktop", "src\Applications\IntelliPath.Desktop\IntelliPath.Desktop.csproj", "{5F663889-9A60-498B-B6CC-8FD6BF95A32E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DE43DA35-2220-4313-BBB4-EBDA81E7AC97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -64,6 +63,14 @@ Global
 		{B1E9EB62-AC82-4835-A5E1-42C74E4E6473}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1E9EB62-AC82-4835-A5E1-42C74E4E6473}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1E9EB62-AC82-4835-A5E1-42C74E4E6473}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F663889-9A60-498B-B6CC-8FD6BF95A32E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F663889-9A60-498B-B6CC-8FD6BF95A32E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F663889-9A60-498B-B6CC-8FD6BF95A32E}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{5F663889-9A60-498B-B6CC-8FD6BF95A32E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F663889-9A60-498B-B6CC-8FD6BF95A32E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A8A6B752-F727-4BB4-A716-64F17DB85B29} = {4B550F67-6DDC-40C3-9B13-75A80E5A11B0}
@@ -76,5 +83,6 @@ Global
 		{1A07A5F2-FC49-45B4-AC33-A1899BE38354} = {7398E59D-D16D-48A2-930D-D36964F7ECAE}
 		{ECB77A87-5D82-456A-B1DE-EC1CB809E246} = {4B550F67-6DDC-40C3-9B13-75A80E5A11B0}
 		{B1E9EB62-AC82-4835-A5E1-42C74E4E6473} = {ECB77A87-5D82-456A-B1DE-EC1CB809E246}
+		{5F663889-9A60-498B-B6CC-8FD6BF95A32E} = {7398E59D-D16D-48A2-930D-D36964F7ECAE}
 	EndGlobalSection
 EndGlobal

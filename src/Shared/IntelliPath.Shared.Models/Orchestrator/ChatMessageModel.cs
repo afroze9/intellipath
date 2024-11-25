@@ -1,4 +1,4 @@
-﻿namespace IntelliPath.Orchestrator.Models;
+namespace IntelliPath.Shared.Models.Orchestrator;
 
 public class ChatMessageModel
 {

@@ -1,6 +1,7 @@
 ﻿using IntelliPath.Orchestrator.Data;
 using IntelliPath.Orchestrator.Entities;
 using IntelliPath.Orchestrator.Models;
+using IntelliPath.Shared.Models.Orchestrator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
