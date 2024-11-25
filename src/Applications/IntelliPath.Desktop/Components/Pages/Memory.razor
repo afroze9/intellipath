@@ -1,39 +1,113 @@
 ﻿@page "/memory"
 @using IntelliPath.Desktop.Services
+@using IntelliPath.Desktop.ViewModels
 @using IntelliPath.Shared.Models.Orchestrator
 
 <PageTitle>Memory</PageTitle>
 
 <FluentCard>
     <FluentLabel Typo="Typography.H1">Memory</FluentLabel>
-    <FluentLabel>Coming Soon...</FluentLabel>
-    <FluentButton OnClick="SaveMemory">Test</FluentButton>
+    <EditForm Model="@memory" OnValidSubmit="@HandleValidSubmit" FormName="memory_form" novalidate>
+        <DataAnnotationsValidator />
+        <FluentValidationSummary />
+        
+        <FluentStack Orientation="Orientation.Vertical">
+            <div>
+                <FluentTextArea Name="description"
+                                Label="Description"
+                                @bind-Value="memory.Description"
+                                Required
+                                Width="100%" />
+                <FluentValidationMessage For="@(() => memory.Description)"/>
+            </div>
+            <div>
+                <FluentAutocomplete
+                    TOption="TagViewModel"
+                    Name="tags"
+                    AutoComplete="off"
+                    Required
+                    Label="Select Tags"
+                    Placeholder="Select Tags"
+                    MaximumSelectedOptions="3"
+                    OptionText="@(item => item.Name)"
+                    Multiple="true"
+                    OnOptionsSearch="@OnSearchAsync"
+                    @bind-SelectedOptions="@memory.Tags"
+                    Width="100%"
+                />
+                <FluentValidationMessage For="@(() => memory.Tags)"/>
+            </div>
+
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent">Save Memory</FluentButton>
+        </FluentStack>
+    </EditForm>
 
     <FluentDataGrid Items="@Memories">
-        <PropertyColumn Property="@(p => string.Join(", ", p.Tags))" Sortable="true" />
         <PropertyColumn Property="@(p => p.Description)" Sortable="true" />
+        <PropertyColumn Property="@(p => string.Join(", ", p.Tags))" Sortable="true" Title="Tags" />
     </FluentDataGrid>
 </FluentCard>
 
 @code
 {
     [Inject] private IMemoryClient MemoryClient { get; set; } = default!;
+    [Inject] private IToastService ToastService { get; set; } = default!;
     
     private IQueryable<MemoryModel> Memories { get; set; } = new List<MemoryModel>().AsQueryable();
+    
+    private static List<TagViewModel> Tags { get; set; } = new()
+    {
+        new TagViewModel { Name = "Personal Info" },
+        new TagViewModel { Name = "Work Info" },
+        new TagViewModel { Name = "Hobbies" },
+        new TagViewModel { Name = "Skills" },
+        new TagViewModel { Name = "Education" },
+        new TagViewModel { Name = "Certifications" },
+        new TagViewModel { Name = "Projects" },
+    };
 
+    [SupplyParameterFromForm]
+    private MemoryViewModel memory { get; set; } = new()
+    {
+        Description = string.Empty,
+    };
+    
     protected override async Task OnInitializedAsync()
     {
         List<MemoryModel> memories = await MemoryClient.GetMemoriesAsync();
         Memories = memories.AsQueryable();
         StateHasChanged();
     }
-
-    private async Task SaveMemory(MouseEventArgs obj)
+    
+    private async Task OnSearchAsync(OptionsSearchEventArgs<TagViewModel> e)
     {
+        e.Items = Tags.Where(x => x.Name.StartsWith(e.Text, StringComparison.InvariantCultureIgnoreCase))
+            .OrderBy(x => x.Name);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if(memory.Description == null || !memory.Tags.Any())
+        {
+            return;
+        }
+
+        try
+        {
+            
         await MemoryClient.SaveMemoryAsync(new MemoryModel()
         {
-            Tags = ["personal_info"],
-            Description = "My name is Afroze and I'm a solution architect",
+            Tags = memory.Tags.Select(x => x.Name).ToList(),
+            Description = memory.Description,
         });
+        
+            memory.Description = string.Empty;
+            memory.Tags = [];
+            ToastService.ShowSuccess("Memory saved successfully1", timeout: 5000);
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowError("Could not save new memory. Please try again later.", timeout: 5000);
+        }
     }
 }
