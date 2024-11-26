@@ -27,7 +27,7 @@ public class CalendarPlugin(IGraphClientFactory graphClientFactory)
         List<EventModel> eventModels = [];
         if (events?.Value?.Count > 0)
         {
-            foreach (var @event in events.Value)
+            foreach (Event @event in events.Value)
             {
                 eventModels.Add(new EventModel()
                 {
@@ -48,7 +48,7 @@ public class CalendarPlugin(IGraphClientFactory graphClientFactory)
     {
         GraphServiceClient graphClient = graphClientFactory.Create();
 
-        var @event = new Event
+        Event @event = new Event
         {
             Subject = subject,
             Start = new DateTimeTimeZone

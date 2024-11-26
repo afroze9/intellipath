@@ -28,7 +28,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddScoped<IGraphClientFactory, GraphClientFactory>();
+builder.Services.AddSingleton<IGraphClientFactory, GraphClientFactory>();
 builder.Services.AddScoped<IMemoryService, MemoryService>();
 builder.AddQdrantClient("memory-db");
 builder.Services.AddVectorStoreTextSearch<Memory>();

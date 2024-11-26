@@ -13,8 +13,8 @@ public static class ChatEndpoints
     
     public static void MapChatEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost(BasePath, GenerateAsync)
-            .Produces<ChatMessageModel>()
+        endpoints.MapPost(BasePath + "/generate", GenerateAsync)
+            .Produces<ConversationModel>()
             .WithTags(Tag)
             .WithName("Generate");
         
@@ -22,41 +22,46 @@ public static class ChatEndpoints
             .Produces<ChatMessageModel>()
             .WithTags(Tag)
             .WithName("GenerateTitle");
+        
+        endpoints.MapGet(BasePath + "/conversation", GetConversationsAsync)
+            .Produces<List<ConversationModel>>()
+            .WithTags(Tag)
+            .WithName("GetConversations");
+        
+        endpoints.MapGet(BasePath + "/conversation/{conversationId}", GetConversationByIdAsync)
+            .Produces<ConversationModel?>()
+            .WithTags(Tag)
+            .WithName("GetConversationById");
     }
     
     private static async Task<IResult> GenerateAsync(
         [FromBody] CreateConversationRequestModel request,
         IChatService chatService)
     {
-        ChatMessageModel result = await chatService.Generate(request.ToCreateConversationRequest());
+        ConversationModel result = await chatService.Generate(request.ToCreateConversationRequest());
         return Results.Ok(result);
     }
     
     private static async Task<IResult> GenerateTitleAsync(
+        [FromQuery] string conversationId,
         [FromBody] string message,
         IChatService chatService)
     {
-        ChatMessageModel result = await chatService.GenerateTitle(message);
+        ChatMessageModel result = await chatService.GenerateTitle(conversationId, message);
         return Results.Ok(result);
     }
-}
-
-public static class ConversationEndpoints
-{
-    private const string Tag = "Conversation";
-    private const string BasePath = "api/v1/conversation";
-
-    public static void MapConversationEndpoints(this IEndpointRouteBuilder endpoints)
-    {
-        endpoints.MapGet(BasePath, GetConversations)
-            .Produces<List<ConversationModel>>()
-            .WithTags(Tag)
-            .WithName("GetConversations");
-    }
-
-    private static async Task<IResult> GetConversations(IChatService chatService)
+    
+    private static async Task<IResult> GetConversationsAsync(IChatService chatService)
     {
         List<ConversationModel> result = await chatService.GetConversations();
         return Results.Ok(result);
+    }
+    
+    private static async Task<IResult> GetConversationByIdAsync(
+        IChatService chatService,
+        [FromRoute] string conversationId)
+    {
+        ConversationModel? result = await chatService.GetConversationByIdAsync(conversationId);
+        return result == null ? Results.NotFound() : Results.Ok(result);
     }
 }

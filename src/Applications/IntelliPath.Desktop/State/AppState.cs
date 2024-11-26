@@ -28,6 +28,12 @@ public class AppState
         _userState.UserEmail = email;
         OnChange?.Invoke();
     }
+    
+    public void SetAuthToken(string authToken)
+    {
+        _userState.AuthToken = authToken;
+        OnChange?.Invoke();
+    }
 
     public IReadOnlyList<ConversationModel> Conversations => _conversations.AsReadOnly();
 
@@ -65,6 +71,15 @@ public class AppState
             OnChange?.Invoke();
         }
     }
+    
+    public void SetCurrentConversationId(string conversationId)
+    {
+        if (_currentConversation is not null)
+        {
+            _currentConversation.Id = conversationId;
+            OnChange?.Invoke();
+        }
+    }
 
     public event Action? OnChange;
 }
@@ -74,4 +89,6 @@ public class UserState
     public string UserEmail { get; set; } = string.Empty;
 
     public string UserDisplayName { get; set; } = string.Empty;
+    
+    public string AuthToken { get; set; } = string.Empty;
 }

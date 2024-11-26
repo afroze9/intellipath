@@ -4,6 +4,7 @@ namespace IntelliPath.Orchestrator.Models;
 
 public class CreateConversationRequest
 {
+    public string? Id { get; set; }
     public List<CreateChatMessageRequest> Messages { get; set; } = [];
 }
 

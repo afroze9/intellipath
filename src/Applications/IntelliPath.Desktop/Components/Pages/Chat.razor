@@ -89,7 +89,6 @@
                     IconStart="@(new Icons.Regular.Size24.Send())"
                     Type="ButtonType.Submit"
                     Appearance="Appearance.Lightweight"
-                    Disabled="@(chat.ChatInput.Length == 0)"
                     Title="Send Message"/>
             </div>
         </FluentStack>
@@ -145,6 +144,7 @@
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private ITranscriptionService TranscriptionService { get; set; } = default!;
     [Inject] private IChatClient ChatClient { get; set; } = default!;
+    [Inject] private IToastService ToastService { get; set; } = default!;
     
     private ElementReference messagesRef;
     private bool IsLoading { get; set; } = false;
@@ -276,18 +276,57 @@
             Role = "User",
         });
         
+        await ToggleLoading(true);
         await ScrollToBottom();
         await ClearInput();
-        await ToggleLoading(true);
 
         ConversationModel? currentConv = AppState.GetCurrentConversation();
 
-        List<ChatMessageModel> responses = await ChatClient.GenerateAsync(currentConv);
-        foreach (ChatMessageModel response in responses)
+        if (currentConv == null)
+        {
+            await ToggleLoading(false);
+            return;
+        }
+        
+        ConversationModel? conversationResponse = await ChatClient.GenerateAsync(currentConv);
+        if(conversationResponse == null)
+        {
+            await ToggleLoading(false);
+            ToastService.ShowError("Failed to generate response", 5000);
+            return;
+        }
+        // Get everything from responses after the last response where role is user
+        
+        int lastUserIndex = currentConv.Messages.FindLastIndex(x => x.Role.ToLowerInvariant() == "user");
+        if (lastUserIndex != -1)
+        {
+            conversationResponse.Messages = conversationResponse.Messages.Skip(lastUserIndex + 1).ToList();
+        }
+        
+        AppState.SetCurrentConversationId(conversationResponse.Id);
+        foreach (ChatMessageModel response in conversationResponse.Messages)
         {
             AppState.AddMessageToCurrentConversation(response);
         }
+
+        if (string.IsNullOrEmpty(currentConv.Title))
+        {
+            await GenerateTitle();
+        }
+        
+        // Update here too
+        
         await ToggleLoading(false);
+    }
+
+    private async Task GenerateTitle()
+    {
+        ConversationModel? currentConv = AppState.GetCurrentConversation();
+        if (currentConv is not null && !string.IsNullOrEmpty(currentConv.Id))
+        {
+            currentConv.Title = await ChatClient.GenerateTitleAsync(currentConv.Id, chat.ChatInput);
+            StateHasChanged();
+        }
     }
     
     private void NewChat()
@@ -313,7 +352,7 @@
             return;
         }
 
-        ConversationModel? dbConversation = await ChatClient.GetConversationAsync(conversationId);
+        ConversationModel? dbConversation = await ChatClient.GetConversationByIdAsync(conversationId);
         if (dbConversation == null)
         {
             Console.WriteLine($"Could not find conversation with id {conversationId}");
@@ -353,4 +392,23 @@
         StateHasChanged();
         // Sample function to process the recorded audio
     }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AppState.GetCurrentConversation()?.Messages.Count == 0)
+        {
+            AppState.AddMessageToCurrentConversation(new ChatMessageModel()
+            {
+                Content = SystemPrompt,
+                Role = "System",
+            });
+        }
+
+        if (AppState.Conversations.Count == 0)
+        {
+            List<ConversationModel> conversations = await ChatClient.GetConversationsAsync();
+            AppState.SetConversations(conversations);
+        }
+    }
+
 }

@@ -28,7 +28,7 @@ public class EmailPlugin(IGraphClientFactory graphClientFactory)
         }
 
         List<EmailSummaryModel> emails = [];
-        foreach (var message in messages.Value)
+        foreach (Message message in messages.Value)
         {
             emails.Add(new EmailSummaryModel()
             {
