@@ -75,6 +75,11 @@ public class ChatService(Kernel kernel, ApplicationDbContext context) : IChatSer
             Content = title,
         };
     }
+
+    public Task<List<ConversationModel>> GetConversations()
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public interface IChatService
@@ -82,4 +87,6 @@ public interface IChatService
     Task<ChatMessageModel> Generate(CreateConversationRequest request);
 
     Task<ChatMessageModel> GenerateTitle(string message);
+
+    Task<List<ConversationModel>> GetConversations();
 }

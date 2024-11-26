@@ -1,7 +1,356 @@
 ﻿@page "/"
+@using IntelliPath.Desktop.Services
+@using IntelliPath.Desktop.State
+@using IntelliPath.Desktop.ViewModels
+@using IntelliPath.Shared.Models.Orchestrator
+@using IntelliPath.Desktop.Components.Markdown
 
-<h3>Chat</h3>
+
+<PageTitle>Chat</PageTitle>
+
+<FluentStack Orientation="Orientation.Horizontal">
+    <FluentStack Orientation="Orientation.Vertical" Style="height: 100vh; width: 300px">
+        <FluentStack Orientation="Orientation.Horizontal" Style="padding: 1rem">
+            <FluentButton Appearance="Appearance.Accent" IconStart="@(new Icons.Regular.Size24.ChatAdd())" Style="width: 100%" OnClick="NewChat">New Chat</FluentButton>
+        </FluentStack>
+        <FluentStack Orientation="Orientation.Vertical" Style="overflow-y: auto; overflow-x: hidden;">
+            <FluentNavMenu Width="286" Style="padding: 1rem">
+                @foreach (KeyValuePair<string, List<ConversationModel>> group in GetConversationGroups())
+                {
+                    <FluentLabel>@group.Key</FluentLabel>
+                    @foreach (ConversationModel conversation in group.Value)
+                    {
+                        <FluentNavLink
+                            OnClick="() => LoadConversation(conversation.Id)"
+                            Icon="GetNavIcon(conversation.Id)"
+                            Tooltip="@conversation.Title">
+                            @conversation.Title
+                        </FluentNavLink>
+                    }
+
+                    <FluentDivider Style="width: 100%; margin-bottom: 1rem"></FluentDivider>
+                }
+            </FluentNavMenu>
+        </FluentStack>
+    </FluentStack>
+    <FluentStack Orientation="Orientation.Vertical" Style="height: 100vh; width: 100%">
+        <div class="messages-container" @ref="messagesRef">
+            @foreach (ChatMessageModel message in AppState.GetCurrentConversation()?.Messages ?? [])
+            {
+                <FluentCard Class="@GetCardClass(message.Role)">
+                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 1rem">
+                        <FluentIcon Value="@GetRoleIcon(message.Role)"></FluentIcon>
+                        <FluentLabel>@(message.Role.ToLower() == "user" ? AppState.GetUserState().UserDisplayName : message.Role)</FluentLabel>
+                    </FluentStack>
+                    @if (IsMarkdown(message.Content))
+                    {
+                        <MarkdownSection Content="@message.Content"/>
+                    }
+                    else
+                    {
+                        <FluentLabel Typo="Typography.Body">
+                            @message.Content
+                        </FluentLabel>
+                    }
+                </FluentCard>
+            }
+            @if (IsLoading)
+            {
+                <FluentCard Class="@GetCardClass("system")">
+                    <FluentStack Orientation="Orientation.Horizontal" Style="gap: 1rem">
+                        <FluentIcon Value="@GetRoleIcon("system")"></FluentIcon>
+                        <FluentLabel>Thinking</FluentLabel>
+                    </FluentStack>
+                    <FluentLabel Style="margin-top: 1rem">
+                        <FluentSkeleton Height="30px" Width="100%" Shimmer="true"></FluentSkeleton>
+                    </FluentLabel>
+                </FluentCard>
+            }
+        </div>
+
+        <EditForm Model="@chat" OnValidSubmit="@HandleValidSubmit" FormName="chat_form" novalidate Style="width: 100%">
+        <FluentStack Orientation="Orientation.Horizontal" Class="input-container">
+            <FluentTextArea
+                Name="chatInput"
+                @bind-Value="@chat.ChatInput"
+                Required
+                Placeholder="Type a message..."
+                Resize="TextAreaResize.Vertical"
+                Rows="6"
+                Class="message-input"/>
+            <div class="input-buttons">
+                <FluentButton
+                    IconStart="GetMicIcon()"
+                    OnClick="ToggleVoiceInput"
+                    Appearance="Appearance.Lightweight"
+                    Disabled="IsProcessingAudio"
+                    Title="Voice Input"/>
+                <FluentButton
+                    IconStart="@(new Icons.Regular.Size24.Send())"
+                    Type="ButtonType.Submit"
+                    Appearance="Appearance.Lightweight"
+                    Disabled="@(chat.ChatInput.Length == 0)"
+                    Title="Send Message"/>
+            </div>
+        </FluentStack>
+        </EditForm>
+    </FluentStack>
+</FluentStack>
+
+
+<style>
+    .messages-container { 
+        overflow-y: auto;
+        padding: 1rem;
+        scroll-behavior: smooth;
+        width: 100%;
+        gap: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+    .message {
+        width: 80%;
+        gap: 1rem;
+        animation: message-fade-in 0.3s ease-out;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message.user {
+        margin-left: auto;
+    }
+    
+    .input-container {
+        margin-top: auto;
+        padding: 1rem;
+    }
+    
+    .message-input {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-buttons {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+</style>
+
 
 @code {
+    [Inject] private AppState AppState { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private ITranscriptionService TranscriptionService { get; set; } = default!;
+    [Inject] private IChatClient ChatClient { get; set; } = default!;
+    
+    private ElementReference messagesRef;
+    private bool IsLoading { get; set; } = false;
+    private bool IsRecording { get; set; } = false;
+    private bool IsProcessingAudio { get; set; } = false;
 
+    [SupplyParameterFromForm] private ChatViewModel chat { get; set; } = new ();
+    private const string SystemPrompt = "You are an efficient assistant and respond with only whats needed and nothing else. Try and save important information to the knowledgebase as much as possible. And use it to help answer questions where needed.";
+    
+    private Icon GetMicIcon() => IsRecording ? new Icons.Filled.Size24.Mic() : new Icons.Regular.Size24.Mic();
+    private Icon GetNavIcon(string conversationId)
+    {
+        if (AppState.GetCurrentConversation()?.Id == conversationId)
+        {
+            return new Icons.Regular.Size20.ArrowCircleRight();
+        }
+
+        return new Icons.Regular.Size20.LineHorizontal1Dashes();
+    }
+    
+    private Icon GetRoleIcon(string role)
+    {
+        return role.ToLower() switch
+        {
+            "user" => new Icons.Regular.Size24.Person(),
+            "assistant" => new Icons.Regular.Size24.Bot(),
+            "system" => new Icons.Regular.Size24.Desktop(),
+            "tool" => new Icons.Regular.Size24.WrenchScrewdriver(),
+            _ => new Icons.Regular.Size24.Warning(),
+        };
+    }
+    
+    private string GetCardClass(string role)
+    {
+        return $"message {role.ToLower()}";
+    }
+    
+    private bool IsMarkdown(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return false;
+        }
+
+        // Simple checks for common Markdown syntax
+        string[] markdownIndicators = { "#", "*", "-", "_", "`", ">", "[", "]", "(", ")", "!", "```" };
+        foreach (string indicator in markdownIndicators)
+        {
+            if (input.Contains(indicator))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    private async Task ScrollToBottom()
+    {
+        await JS.InvokeVoidAsync("scrollToBottom", messagesRef);
+    }
+    
+    private async Task ClearInput()
+    {
+        chat.ChatInput = string.Empty;
+        StateHasChanged();
+    }
+    
+    private async Task ToggleLoading(bool isLoading)
+    {
+        IsLoading = isLoading;
+        StateHasChanged();
+    }
+    
+    private Dictionary<string, List<ConversationModel>> GetConversationGroups()
+    {
+        Dictionary<string, List<ConversationModel>> groups = new();
+
+        List<ConversationModel> conversations = AppState.Conversations.OrderByDescending(x => x.CreatedAt).ToList();
+        if (conversations.Count == 0)
+        {
+            return groups;
+        }
+
+        DateTime today = DateTime.Today;
+        DateTime yesterday = today.AddDays(-1);
+        DateTime lastWeek = today.AddDays(-7);
+        DateTime lastMonth = today.AddDays(-30);
+
+        List<ConversationModel> todayConversations = conversations.Where(x => x.CreatedAt.Date == today).ToList();
+        List<ConversationModel> yesterdayConversations = conversations.Where(x => x.CreatedAt.Date == yesterday).ToList();
+        List<ConversationModel> lastWeekConversations = conversations.Where(x => x.CreatedAt.Date > lastWeek && x.CreatedAt.Date < yesterday).ToList();
+        List<ConversationModel> lastMonthConversations = conversations.Where(x => x.CreatedAt.Date > lastMonth && x.CreatedAt.Date < lastWeek).ToList();
+
+        if (todayConversations.Any()) groups.Add("Today", todayConversations);
+        if (yesterdayConversations.Any()) groups.Add("Yesterday", yesterdayConversations);
+        if (lastWeekConversations.Any()) groups.Add("Last 7 days", lastWeekConversations);
+        if (lastMonthConversations.Any()) groups.Add("Last 30 days", lastMonthConversations);
+
+        return groups;
+    }
+    
+    // Handlers
+    public async Task ToggleVoiceInput()
+    {
+        if (IsRecording)
+        {
+            await StopRecording();
+            IsRecording = false;
+        }
+        else
+        {
+            await StartRecording();
+            IsRecording = true;
+        }
+        StateHasChanged();
+    }
+    
+    private async Task HandleValidSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(chat.ChatInput))
+        {
+            return;
+        }
+        
+        AppState.AddMessageToCurrentConversation(new ChatMessageModel()
+        {
+            Content = chat.ChatInput,
+            Role = "User",
+        });
+        
+        await ScrollToBottom();
+        await ClearInput();
+        await ToggleLoading(true);
+
+        ConversationModel? currentConv = AppState.GetCurrentConversation();
+
+        List<ChatMessageModel> responses = await ChatClient.GenerateAsync(currentConv);
+        foreach (ChatMessageModel response in responses)
+        {
+            AppState.AddMessageToCurrentConversation(response);
+        }
+        await ToggleLoading(false);
+    }
+    
+    private void NewChat()
+    {
+        ConversationModel newConversation = new ConversationModel()
+        {
+            Messages =
+            [
+                new ChatMessageModel()
+                {
+                    Content = SystemPrompt,
+                    Role = "System",
+                }
+            ]
+        };
+        AppState.SetCurrentConversation(newConversation);
+    }
+
+    private async Task LoadConversation(string conversationId)
+    {
+        if (AppState.GetCurrentConversation()?.Id == conversationId)
+        {
+            return;
+        }
+
+        ConversationModel? dbConversation = await ChatClient.GetConversationAsync(conversationId);
+        if (dbConversation == null)
+        {
+            Console.WriteLine($"Could not find conversation with id {conversationId}");
+            return;
+        }
+        
+        dbConversation.Messages = dbConversation.Messages.OrderBy(x => x.CreatedAt).ToList();
+
+        AppState.SetCurrentConversation(dbConversation);
+        StateHasChanged();
+        await ScrollToBottom();
+    }
+    
+    // Do-ers
+    private async Task StartRecording()
+    {
+        IsRecording = true;
+        StateHasChanged();
+        // Add your logic to start recording audio here
+        await JS.InvokeVoidAsync("startRecording");
+    }
+
+    private async Task StopRecording()
+    {
+        IsRecording = false;
+        StateHasChanged();
+        string data = await JS.InvokeAsync<string>("stopRecording");
+        await ProcessRecordedAudio(data);
+    }
+    
+    private async Task ProcessRecordedAudio(string data)
+    {
+        IsProcessingAudio = true;
+
+        await TranscriptionService.SaveAsync(data);
+        IsProcessingAudio = false;
+        StateHasChanged();
+        // Sample function to process the recorded audio
+    }
 }

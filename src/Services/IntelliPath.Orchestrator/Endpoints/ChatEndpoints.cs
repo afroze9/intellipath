@@ -40,3 +40,23 @@ public static class ChatEndpoints
         return Results.Ok(result);
     }
 }
+
+public static class ConversationEndpoints
+{
+    private const string Tag = "Conversation";
+    private const string BasePath = "api/v1/conversation";
+
+    public static void MapConversationEndpoints(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet(BasePath, GetConversations)
+            .Produces<List<ConversationModel>>()
+            .WithTags(Tag)
+            .WithName("GetConversations");
+    }
+
+    private static async Task<IResult> GetConversations(IChatService chatService)
+    {
+        List<ConversationModel> result = await chatService.GetConversations();
+        return Results.Ok(result);
+    }
+}

@@ -1,4 +1,5 @@
-﻿using IntelliPath.Desktop.Configuration;
+﻿using System.Net.Http.Headers;
+using IntelliPath.Desktop.Configuration;
 using IntelliPath.Desktop.Services;
 using IntelliPath.Desktop.State;
 using Microsoft.Extensions.Configuration;
@@ -38,7 +39,15 @@ public static class MauiProgram
 		{
 		    client.BaseAddress = new Uri("https://localhost:7019");
 		});
-		
+		builder.Services.AddHttpClient<IChatClient, ChatClient>(client =>
+		{
+		    client.BaseAddress = new Uri("https://localhost:7019");
+		});
+		builder.Services.AddHttpClient<ITranscriptionService, TranscriptionService>("TranscriptionClient", client =>
+		{
+			client.BaseAddress = new Uri("http://localhost:8000"); // Replace with your base URL
+			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+		});
 		
 
 		builder.Services.AddFluentUIComponents();

@@ -21,3 +21,6 @@ builder.AddProject<Projects.IntelliPath_Orchestrator>("orchestrator")
     .WaitFor(qdrant);
 
 builder.Build().Run();
+
+
+// http://elsa-server/api/v1/asdjkasdas
