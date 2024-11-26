@@ -1,3 +1,4 @@
+using IntelliPath.Orchestrator.Entities;
 using IntelliPath.Orchestrator.Entities.Vector;
 using IntelliPath.Orchestrator.Services;
 using IntelliPath.Shared.Models.Orchestrator;
@@ -7,7 +8,7 @@ namespace IntelliPath.Orchestrator.Endpoints;
 
 public static class MemoryEndpoints
 {
-    private const string Tag = "Chat";
+    private const string Tag = "Memory";
     private const string BasePath = "api/v1/memory";
     
     public static void MapMemoryEndpoints(this IEndpointRouteBuilder endpoints)
@@ -21,6 +22,11 @@ public static class MemoryEndpoints
             .Produces<ChatMessageModel>()
             .WithTags(Tag)
             .WithName("Add");
+        
+        endpoints.MapGet(BasePath + "/tags", GetTagsAsync)
+            .Produces<List<MemoryTagModel>>()
+            .WithTags(Tag)
+            .WithName("Get All Tags");
     }
     
     private static async Task<IResult> GetAllAsync(IMemoryService memoryService)
@@ -30,10 +36,22 @@ public static class MemoryEndpoints
         {
             MemoryId = x.MemoryId,
             Tags = x.Tags,
-            Description = x.Description
+            Description = x.Description,
         }).ToList();
         
         return Results.Ok(mappedResult);
+    }
+
+    private static async Task<IResult> GetTagsAsync(IMemoryService memoryService)
+    {
+        List<MemoryTag> tags = await memoryService.GetMemoryTagsAsync();
+        List<MemoryTagModel> mappedTags = tags.Select(x => new MemoryTagModel()
+        {
+            TagId = x.Id,
+            Name = x.Name,
+        }).ToList();
+
+        return Results.Ok(mappedTags);
     }
     
     private static async Task<IResult> AddAsync(

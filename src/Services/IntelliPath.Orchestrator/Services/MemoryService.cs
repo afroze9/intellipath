@@ -1,6 +1,9 @@
+using IntelliPath.Orchestrator.Data;
+using IntelliPath.Orchestrator.Entities;
 using Microsoft.Extensions.VectorData;
 using Microsoft.SemanticKernel.Embeddings;
 using IntelliPath.Orchestrator.Entities.Vector;
+using Microsoft.EntityFrameworkCore;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 
@@ -9,6 +12,7 @@ namespace IntelliPath.Orchestrator.Services;
 public class MemoryService(
     [FromKeyedServices("memory-db")] IVectorStore vectorStore,
     QdrantClient client,
+    ApplicationDbContext context,
     ITextEmbeddingGenerationService textEmbeddingGenerationService) : IMemoryService
 {
     private const string CollectionName = "memories";
@@ -62,8 +66,21 @@ public class MemoryService(
         return result;
     }
 
+    public async Task<List<MemoryTag>> GetMemoryTagsAsync(CancellationToken cancellationToken = default)
+    {
+        return await context.MemoryTags.ToListAsync(cancellationToken);
+    }
+
     public async Task SaveMemoryAsync(Memory memory, CancellationToken cancellationToken = default)
     {
+        foreach (string tag in memory.Tags)
+        {
+            if (!await context.MemoryTags.AnyAsync(x => x.Name == tag, cancellationToken: cancellationToken))
+            {
+                await context.MemoryTags.AddAsync(new MemoryTag { Name = tag }, cancellationToken);
+            }
+        }
+        
         IVectorStoreRecordCollection<ulong, Memory> collection = await EnsureCreatedAsync(cancellationToken);
         memory.DescriptionEmbedding =
             await textEmbeddingGenerationService.GenerateEmbeddingAsync(memory.Description,
@@ -76,6 +93,7 @@ public class MemoryService(
 public interface IMemoryService
 {
     Task<List<Memory>> GetMemoriesAsync(CancellationToken cancellationToken = default);
+    Task<List<MemoryTag>> GetMemoryTagsAsync(CancellationToken cancellationToken = default);
 
     Task SaveMemoryAsync(Memory memory, CancellationToken cancellationToken = default);
 }

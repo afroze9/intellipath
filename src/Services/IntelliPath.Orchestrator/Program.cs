@@ -23,7 +23,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+}, ServiceLifetime.Singleton);
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IGraphClientFactory, GraphClientFactory>();
 builder.Services.AddSingleton<IMemoryService, MemoryService>();
@@ -47,6 +47,12 @@ if (app.Environment.IsDevelopment())
 app.MapDefaultEndpoints();
 app.MapChatEndpoints();
 app.MapMemoryEndpoints();
+
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    ApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.Run();
 
