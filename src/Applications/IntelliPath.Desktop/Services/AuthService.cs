@@ -23,7 +23,7 @@ public class AuthService : IAuthService
             .WithTenantId(_identityOptions.TenantId)
             .WithRedirectUri(_identityOptions.RedirectUri)
             .Build();
-        
+
         TokenCacheHelper.EnableSerialization(_publicClientApplication.UserTokenCache);
     }
 
@@ -64,6 +64,12 @@ public class AuthService : IAuthService
 
         return result;
     }
+
+    public async Task<string> GetTokenAsync(CancellationToken cancellationToken = default)
+    {
+        AuthenticationResult? result = await SignInUserAsync(cancellationToken);
+        return result?.AccessToken ?? string.Empty;
+    }
 }
 
 public interface IAuthService
@@ -71,4 +77,6 @@ public interface IAuthService
     AuthenticationResult? AuthResult { get; set; }
 
     Task<AuthenticationResult?> SignInUserAsync(CancellationToken cancellationToken = default);
+
+    Task<string> GetTokenAsync(CancellationToken cancellationToken = default);
 }

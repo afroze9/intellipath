@@ -5,7 +5,7 @@ using IntelliPath.Shared.Models.Orchestrator;
 
 namespace IntelliPath.Desktop.Services;
 
-public class ChatClient(HttpClient chatClient, AppState appState) : IChatClient
+public class ChatClient(HttpClient chatClient, IAuthService authService) : IChatClient
 {
     public async Task<List<ConversationModel>> GetConversationsAsync()
     {
@@ -49,8 +49,14 @@ public class ChatClient(HttpClient chatClient, AppState appState) : IChatClient
                         Role = m.Role,
                     }).ToList(),
             };
-            string token = appState.GetUserState().AuthToken;
+
+            string token = await authService.GetTokenAsync();
+            if(chatClient.DefaultRequestHeaders.Contains(IntelliPathHeaders.GraphTokenHeader))
+            {
+                chatClient.DefaultRequestHeaders.Remove(IntelliPathHeaders.GraphTokenHeader);
+            }
             chatClient.DefaultRequestHeaders.Add(IntelliPathHeaders.GraphTokenHeader, token);
+            
             HttpResponseMessage response = await chatClient.PostAsJsonAsync("api/v1/chat/generate", request);
             if(response.IsSuccessStatusCode)
             {

@@ -46,7 +46,6 @@
                 if (userInfo != null)
                 {
                     AppState.SetUserState(userInfo.DisplayName ?? "N/A", result.Account.Username);
-                    AppState.SetAuthToken(result.AccessToken);
                 }
             }
         }

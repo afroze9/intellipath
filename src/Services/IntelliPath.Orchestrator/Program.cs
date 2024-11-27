@@ -1,3 +1,4 @@
+using IntelliPath.Orchestrator.Configuration;
 using IntelliPath.Orchestrator.Data;
 using IntelliPath.Orchestrator.Endpoints;
 using IntelliPath.Orchestrator.Entities.Vector;
@@ -16,6 +17,12 @@ builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
+builder.Services.Configure<IdentityOptions>(options => builder.Configuration.GetSection("Identity").Bind(options));
+builder.Services.AddHttpClient<IGraphClient, GraphHttpClient>(client =>
+{
+    client.BaseAddress = new Uri("https://graph.microsoft.com");
+});
+
 builder.Services
     .AddOpenAIChatCompletion("gpt-4o", builder.Configuration["OpenAiApiKey"] ?? string.Empty)
     .AddOpenAITextEmbeddingGeneration("text-embedding-3-large", builder.Configuration["OpenAiApiKey"] ?? string.Empty)
@@ -32,7 +39,6 @@ builder.Services.AddSingleton<IGraphClientFactory, GraphClientFactory>();
 builder.Services.AddScoped<IMemoryService, MemoryService>();
 builder.AddQdrantClient("memory-db");
 builder.Services.AddVectorStoreTextSearch<Memory>();
-//builder.Services.AddQdrantVectorStore(serviceId: "memory-db");
 builder.Services.AddKeyedSingleton<IVectorStore>(
     "memory-db",
     (sp, _) =>
@@ -42,9 +48,9 @@ builder.Services.AddKeyedSingleton<IVectorStore>(
     });
 
 
-builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<CalendarPlugin>(serviceProvider: sp));
-builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<DateTimePlugin>(serviceProvider: sp));
-builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<EmailPlugin>(serviceProvider: sp));
+// builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<CalendarPlugin>(serviceProvider: sp));
+// builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<DateTimePlugin>(serviceProvider: sp));
+// builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<EmailPlugin>(serviceProvider: sp));
 builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<UserInfoPlugin>(serviceProvider: sp));
 
 WebApplication app = builder.Build();
