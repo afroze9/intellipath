@@ -83,6 +83,16 @@ public class AppState
             OnChange?.Invoke();
         }
     }
+    
+    public void SetCurrentConversationCreatedAt(DateTime createdAt)
+    {
+        if (_currentConversation is not null)
+        {
+            _currentConversation.CreatedAt = createdAt;
+            OnChange?.Invoke();
+        }
+    }
+    
     public event Action? OnChange;
 }
 

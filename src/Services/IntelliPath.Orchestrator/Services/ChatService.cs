@@ -35,6 +35,18 @@ public class ChatService(Kernel kernel, ApplicationDbContext context) : IChatSer
             response.Id = conversationToAdd.Id;
             response.CreatedAt = conversationToAdd.CreatedAt;
         }
+        else
+        {
+            var conversationToUpdate = await context.Conversations.FindAsync(request.Id);
+            if (conversationToUpdate != null)
+            {
+                // get the last user message
+                // get the last assistant message
+                
+                conversationToUpdate.Messages.AddRange(newMessages);
+                await context.SaveChangesAsync();
+            }
+        }
         
         IChatCompletionService completionService = kernel.GetRequiredService<IChatCompletionService>();
         OpenAIPromptExecutionSettings openAiPromptExecutionSettings = new ()
@@ -134,7 +146,11 @@ public class ChatService(Kernel kernel, ApplicationDbContext context) : IChatSer
 
     public async Task<ConversationModel?> GetConversationByIdAsync(string conversationId)
     {
-        Conversation? conversation = await context.Conversations.FindAsync(conversationId);
+        Conversation? conversation = await context
+            .Conversations
+            .Where(x => x.Id == conversationId)
+            .Include(x => x.Messages)
+            .FirstOrDefaultAsync();
         return conversation?.ToConversationModel();
     }
 }

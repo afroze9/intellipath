@@ -238,11 +238,14 @@
         List<ConversationModel> yesterdayConversations = conversations.Where(x => x.CreatedAt.Date == yesterday).ToList();
         List<ConversationModel> lastWeekConversations = conversations.Where(x => x.CreatedAt.Date > lastWeek && x.CreatedAt.Date < yesterday).ToList();
         List<ConversationModel> lastMonthConversations = conversations.Where(x => x.CreatedAt.Date > lastMonth && x.CreatedAt.Date < lastWeek).ToList();
+        List<ConversationModel> olderConversations = conversations.Where(x => x.CreatedAt.Date < lastMonth).ToList();
+        
 
         if (todayConversations.Any()) groups.Add("Today", todayConversations);
         if (yesterdayConversations.Any()) groups.Add("Yesterday", yesterdayConversations);
         if (lastWeekConversations.Any()) groups.Add("Last 7 days", lastWeekConversations);
         if (lastMonthConversations.Any()) groups.Add("Last 30 days", lastMonthConversations);
+        if (olderConversations.Any()) groups.Add("Older", olderConversations);
 
         return groups;
     }
@@ -296,8 +299,8 @@
             ToastService.ShowError("Failed to generate response", 5000);
             return;
         }
-        // Get everything from responses after the last response where role is user
         
+        // Get everything from responses after the last response where role is user
         int lastUserIndex = conversationResponse.Messages.FindLastIndex(x => x.Role.ToLowerInvariant() == "user");
         if (lastUserIndex != -1)
         {
@@ -305,9 +308,15 @@
         }
         
         AppState.SetCurrentConversationId(conversationResponse.Id);
+        AppState.SetCurrentConversationCreatedAt(conversationResponse.CreatedAt);
         foreach (ChatMessageModel response in conversationResponse.Messages)
         {
             AppState.AddMessageToCurrentConversation(response);
+        }
+
+        if (!AppState.Conversations.Any(x => x.Id == conversationResponse.Id))
+        {
+            AppState.AddCurrentConversationToList(currentConv);
         }
 
         if (string.IsNullOrEmpty(currentConv.Title))
@@ -316,7 +325,6 @@
         }
         
         // Update here too
-        
         await ToggleLoading(false);
     }
 
@@ -353,7 +361,7 @@
         ConversationModel? dbConversation = await ChatClient.GetConversationByIdAsync(conversationId);
         if (dbConversation == null)
         {
-            Console.WriteLine($"Could not find conversation with id {conversationId}");
+            ToastService.ShowError("Failed to load conversation", 5000);
             return;
         }
         

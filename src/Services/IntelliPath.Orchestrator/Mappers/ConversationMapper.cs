@@ -12,6 +12,7 @@ public static class ConversationMapper
             Id = conversation.Id,
             Title = conversation.Title,
             Messages = conversation.Messages.Select(m => m.ToChatMessageModel()).ToList(),
+            CreatedAt = conversation.CreatedAt,
         };
     }
     
@@ -21,6 +22,8 @@ public static class ConversationMapper
         {
             Role = message.Role.ToString(),
             Content = message.Content,
+            CreatedAt = message.CreatedAt,
+            Id = message.Id,
         };
     }
 }
