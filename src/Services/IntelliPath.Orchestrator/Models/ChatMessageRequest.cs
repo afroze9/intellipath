@@ -1,5 +1,4 @@
-﻿using IntelliPath.Orchestrator.Entities;
-using IntelliPath.Shared.Models.Orchestrator;
+﻿using IntelliPath.Shared.Models.Orchestrator;
 
 namespace IntelliPath.Orchestrator.Models;
 

@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using IntelliPath.Desktop.State;
 using IntelliPath.Shared.Models;
 using IntelliPath.Shared.Models.Orchestrator;
 

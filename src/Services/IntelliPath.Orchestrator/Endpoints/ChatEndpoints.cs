@@ -2,7 +2,6 @@
 using IntelliPath.Orchestrator.Services;
 using IntelliPath.Shared.Models.Orchestrator;
 using Microsoft.AspNetCore.Mvc;
-using ChatMessageModel = IntelliPath.Shared.Models.Orchestrator.ChatMessageModel;
 
 namespace IntelliPath.Orchestrator.Endpoints;
 

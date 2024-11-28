@@ -2,7 +2,7 @@
 
 public class EmailSummaryModel
 {
-    public string? MessageId { get; set; }
+    public string? Id { get; set; }
     public string? ConversationId { get; set; }
     public string? Subject { get; set; }
     public string? From { get; set; }

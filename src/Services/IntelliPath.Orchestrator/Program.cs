@@ -48,9 +48,9 @@ builder.Services.AddKeyedSingleton<IVectorStore>(
     });
 
 
-// builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<CalendarPlugin>(serviceProvider: sp));
-// builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<DateTimePlugin>(serviceProvider: sp));
-// builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<EmailPlugin>(serviceProvider: sp));
+builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<CalendarPlugin>(serviceProvider: sp));
+builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<DateTimePlugin>(serviceProvider: sp));
+builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<EmailPlugin>(serviceProvider: sp));
 builder.Services.AddSingleton<KernelPlugin>(sp => KernelPluginFactory.CreateFromType<UserInfoPlugin>(serviceProvider: sp));
 
 WebApplication app = builder.Build();
