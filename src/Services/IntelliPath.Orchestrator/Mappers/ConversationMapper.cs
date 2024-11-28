@@ -9,7 +9,7 @@ public static class ConversationMapper
     {
         return new ConversationModel
         {
-            Id = conversation.Id,
+            Id = conversation.Id.ToString(),
             Title = conversation.Title,
             Messages = conversation.Messages.Select(m => m.ToChatMessageModel()).ToList(),
             CreatedAt = conversation.CreatedAt,
@@ -23,7 +23,7 @@ public static class ConversationMapper
             Role = message.Role.ToString(),
             Content = message.Content,
             CreatedAt = message.CreatedAt,
-            Id = message.Id,
+            Id = message.Id.ToString(),
         };
     }
 }

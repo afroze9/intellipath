@@ -4,8 +4,8 @@ namespace IntelliPath.Orchestrator.Models;
 
 public class CreateConversationRequest
 {
-    public string? Id { get; set; }
-    public List<CreateChatMessageRequest> Messages { get; set; } = [];
+    public string? ConversationId { get; set; }
+    public List<ChatMessageRequest> Messages { get; set; } = [];
 }
 
 public static class CreateConversationRequestExtensions
@@ -14,6 +14,16 @@ public static class CreateConversationRequestExtensions
     {
         return new CreateConversationRequest
         {
+            ConversationId = model.ConversationId,
+            Messages = model.Messages.Select(x => x.ToCreateChatMessageRequest()).ToList(),
+        };
+    }
+    
+    public static UpdateConversationRequest ToUpdateConversationRequest(this UpdateConversationRequestModel model)
+    {
+        return new UpdateConversationRequest
+        {
+            ConversationId = model.ConversationId,
             Messages = model.Messages.Select(x => x.ToCreateChatMessageRequest()).ToList(),
         };
     }

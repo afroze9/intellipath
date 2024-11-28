@@ -1,9 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace IntelliPath.Orchestrator.Entities;
 
-public class ChatMessage
+public class ChatMessage : EntityBase
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
-    public required string Content { get; set; }
+    [Required]
+    public virtual Conversation Conversation { get; set; }
+
+    [Required]
+    public string Content { get; set; } = string.Empty;
     public required ChatMessageRole Role { get; set; }
 }

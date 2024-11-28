@@ -18,6 +18,7 @@
                 @foreach (KeyValuePair<string, List<ConversationModel>> group in GetConversationGroups())
                 {
                     <FluentLabel>@group.Key</FluentLabel>
+
                     @foreach (ConversationModel conversation in group.Value)
                     {
                         <FluentNavLink
@@ -69,29 +70,29 @@
         </div>
 
         <EditForm Model="@chat" OnValidSubmit="@HandleValidSubmit" FormName="chat_form" novalidate Style="width: 100%">
-        <FluentStack Orientation="Orientation.Horizontal" Class="input-container">
-            <FluentTextArea
-                Name="chatInput"
-                @bind-Value="@chat.ChatInput"
-                Required
-                Placeholder="Type a message..."
-                Resize="TextAreaResize.Vertical"
-                Rows="6"
-                Class="message-input"/>
-            <div class="input-buttons">
-                <FluentButton
-                    IconStart="GetMicIcon()"
-                    OnClick="ToggleVoiceInput"
-                    Appearance="Appearance.Lightweight"
-                    Disabled="IsProcessingAudio"
-                    Title="Voice Input"/>
-                <FluentButton
-                    IconStart="@(new Icons.Regular.Size24.Send())"
-                    Type="ButtonType.Submit"
-                    Appearance="Appearance.Lightweight"
-                    Title="Send Message"/>
-            </div>
-        </FluentStack>
+            <FluentStack Orientation="Orientation.Horizontal" Class="input-container">
+                <FluentTextArea
+                    Name="chatInput"
+                    @bind-Value="@chat.ChatInput"
+                    Required
+                    Placeholder="Type a message..."
+                    Resize="TextAreaResize.Vertical"
+                    Rows="6"
+                    Class="message-input"/>
+                <div class="input-buttons">
+                    <FluentButton
+                        IconStart="GetMicIcon()"
+                        OnClick="ToggleVoiceInput"
+                        Appearance="Appearance.Lightweight"
+                        Disabled="IsProcessingAudio"
+                        Title="Voice Input"/>
+                    <FluentButton
+                        IconStart="@(new Icons.Regular.Size24.Send())"
+                        Type="ButtonType.Submit"
+                        Appearance="Appearance.Lightweight"
+                        Title="Send Message"/>
+                </div>
+            </FluentStack>
         </EditForm>
     </FluentStack>
 </FluentStack>
@@ -140,31 +141,41 @@
 
 
 @code {
+
     [Inject] private AppState AppState { get; set; } = default!;
+
     [Inject] private IJSRuntime JS { get; set; } = default!;
+
     [Inject] private ITranscriptionService TranscriptionService { get; set; } = default!;
+
     [Inject] private IChatClient ChatClient { get; set; } = default!;
+
     [Inject] private IToastService ToastService { get; set; } = default!;
-    
+
     private ElementReference messagesRef;
+
     private bool IsLoading { get; set; } = false;
+
     private bool IsRecording { get; set; } = false;
+
     private bool IsProcessingAudio { get; set; } = false;
 
     [SupplyParameterFromForm] private ChatViewModel chat { get; set; } = new ();
+
     private const string SystemPrompt = "You are an efficient assistant and respond with only whats needed and nothing else. Try and save important information to the knowledgebase as much as possible. And use it to help answer questions where needed.";
-    
+
     private Icon GetMicIcon() => IsRecording ? new Icons.Filled.Size24.Mic() : new Icons.Regular.Size24.Mic();
+
     private Icon GetNavIcon(string conversationId)
     {
-        if (AppState.GetCurrentConversation()?.Id == conversationId)
+        if (string.Equals(AppState.GetCurrentConversation()?.Id, conversationId, StringComparison.InvariantCultureIgnoreCase))
         {
             return new Icons.Regular.Size20.ArrowCircleRight();
         }
 
         return new Icons.Regular.Size20.LineHorizontal1Dashes();
     }
-    
+
     private Icon GetRoleIcon(string role)
     {
         return role.ToLower() switch
@@ -176,12 +187,12 @@
             _ => new Icons.Regular.Size24.Warning(),
         };
     }
-    
+
     private string GetCardClass(string role)
     {
         return $"message {role.ToLower()}";
     }
-    
+
     private bool IsMarkdown(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -191,6 +202,7 @@
 
         // Simple checks for common Markdown syntax
         string[] markdownIndicators = { "#", "*", "-", "_", "`", ">", "[", "]", "(", ")", "!", "```" };
+
         foreach (string indicator in markdownIndicators)
         {
             if (input.Contains(indicator))
@@ -201,29 +213,30 @@
 
         return false;
     }
-    
+
     private async Task ScrollToBottom()
     {
         await JS.InvokeVoidAsync("scrollToBottom", messagesRef);
     }
-    
+
     private async Task ClearInput()
     {
         chat.ChatInput = string.Empty;
         StateHasChanged();
     }
-    
+
     private async Task ToggleLoading(bool isLoading)
     {
         IsLoading = isLoading;
         StateHasChanged();
     }
-    
+
     private Dictionary<string, List<ConversationModel>> GetConversationGroups()
     {
-        Dictionary<string, List<ConversationModel>> groups = new();
+        Dictionary<string, List<ConversationModel>> groups = new ();
 
         List<ConversationModel> conversations = AppState.Conversations.OrderByDescending(x => x.CreatedAt).ToList();
+
         if (conversations.Count == 0)
         {
             return groups;
@@ -239,7 +252,7 @@
         List<ConversationModel> lastWeekConversations = conversations.Where(x => x.CreatedAt.Date > lastWeek && x.CreatedAt.Date < yesterday).ToList();
         List<ConversationModel> lastMonthConversations = conversations.Where(x => x.CreatedAt.Date > lastMonth && x.CreatedAt.Date < lastWeek).ToList();
         List<ConversationModel> olderConversations = conversations.Where(x => x.CreatedAt.Date < lastMonth).ToList();
-        
+
 
         if (todayConversations.Any()) groups.Add("Today", todayConversations);
         if (yesterdayConversations.Any()) groups.Add("Yesterday", yesterdayConversations);
@@ -249,7 +262,7 @@
 
         return groups;
     }
-    
+
     // Handlers
     public async Task ToggleVoiceInput()
     {
@@ -263,9 +276,10 @@
             await StartRecording();
             IsRecording = true;
         }
+
         StateHasChanged();
     }
-    
+
     private async Task HandleValidSubmit()
     {
         if (string.IsNullOrWhiteSpace(chat.ChatInput))
@@ -279,7 +293,7 @@
             Content = currentMessage,
             Role = "User",
         });
-        
+
         await ToggleLoading(true);
         await ScrollToBottom();
         await ClearInput();
@@ -291,50 +305,54 @@
             await ToggleLoading(false);
             return;
         }
-        
+
         ConversationModel? conversationResponse = await ChatClient.GenerateAsync(currentConv);
-        if(conversationResponse == null)
+
+        if (conversationResponse == null)
         {
             await ToggleLoading(false);
             ToastService.ShowError("Failed to generate response", 5000);
             return;
         }
-        
+
         // Get everything from responses after the last response where role is user
         int lastUserIndex = conversationResponse.Messages.FindLastIndex(x => x.Role.ToLowerInvariant() == "user");
+
         if (lastUserIndex != -1)
         {
             conversationResponse.Messages = conversationResponse.Messages.Skip(lastUserIndex + 1).ToList();
         }
-        
+
         AppState.SetCurrentConversationId(conversationResponse.Id);
+        AppState.SetCurrentConversationTitle(conversationResponse.Title ?? string.Empty);
         AppState.SetCurrentConversationCreatedAt(conversationResponse.CreatedAt);
+
         foreach (ChatMessageModel response in conversationResponse.Messages)
         {
             AppState.AddMessageToCurrentConversation(response);
         }
 
-        if (!AppState.Conversations.Any(x => x.Id == conversationResponse.Id))
+        if (!AppState.Conversations.Any(x => x.Id.ToUpperInvariant() == conversationResponse.Id.ToUpperInvariant()))
         {
             AppState.AddCurrentConversationToList(currentConv);
         }
 
-        if (string.IsNullOrEmpty(currentConv.Title))
-        {
-            await GenerateTitle(currentConv.Id, currentMessage);
-        }
-        
+        await UpdateConversation(currentConv);
+
         // Update here too
         await ToggleLoading(false);
     }
 
-    private async Task GenerateTitle(string conversationId, string message)
+    private async Task UpdateConversation(ConversationModel model)
     {
-        string title = await ChatClient.GenerateTitleAsync(conversationId, message);
-        AppState.SetCurrentConversationTitle(title);
+        if (!await ChatClient.UpdateConversationAsync(model))
+        {
+            ToastService.ShowError("Failed to update conversation", 5000);
+        }
+
         StateHasChanged();
     }
-    
+
     private void NewChat()
     {
         ConversationModel newConversation = new ConversationModel()
@@ -348,30 +366,32 @@
                 }
             ]
         };
+
         AppState.SetCurrentConversation(newConversation);
     }
 
     private async Task LoadConversation(string conversationId)
     {
-        if (AppState.GetCurrentConversation()?.Id == conversationId)
+        if (AppState.GetCurrentConversation()?.Id.ToUpperInvariant() == conversationId.ToUpperInvariant())
         {
             return;
         }
 
         ConversationModel? dbConversation = await ChatClient.GetConversationByIdAsync(conversationId);
+
         if (dbConversation == null)
         {
             ToastService.ShowError("Failed to load conversation", 5000);
             return;
         }
-        
+
         dbConversation.Messages = dbConversation.Messages.OrderBy(x => x.CreatedAt).ToList();
 
         AppState.SetCurrentConversation(dbConversation);
         StateHasChanged();
         await ScrollToBottom();
     }
-    
+
     // Do-ers
     private async Task StartRecording()
     {
@@ -388,7 +408,7 @@
         string data = await JS.InvokeAsync<string>("stopRecording");
         await ProcessRecordedAudio(data);
     }
-    
+
     private async Task ProcessRecordedAudio(string data)
     {
         IsProcessingAudio = true;

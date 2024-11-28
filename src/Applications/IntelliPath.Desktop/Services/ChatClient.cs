@@ -41,10 +41,12 @@ public class ChatClient(HttpClient chatClient, IAuthService authService) : IChat
         {
             CreateConversationRequestModel request = new CreateConversationRequestModel
             {
+                ConversationId = conversation.Id,
                 Messages = conversation.Messages
                     .Where(m => m.Role.ToLowerInvariant() != "system")
-                    .Select(m => new CreateChatMessageRequestModel
+                    .Select(m => new ChatMessageRequestModel
                     {
+                        Id = m.Id,
                         Content = m.Content,
                         Role = m.Role,
                     }).ToList(),
@@ -71,24 +73,32 @@ public class ChatClient(HttpClient chatClient, IAuthService authService) : IChat
 
         return null;
     }
-
-    public async Task<string> GenerateTitleAsync(string conversationId, string message)
+    
+    public async Task<bool> UpdateConversationAsync(ConversationModel model)
     {
         try
         {
-            HttpResponseMessage response = await chatClient.PostAsJsonAsync($"api/v1/chat/title?conversationId={conversationId}", message);
-            if (response.IsSuccessStatusCode)
+            UpdateConversationRequestModel request = new UpdateConversationRequestModel()
             {
-                ChatMessageModel? responseModel = await response.Content.ReadFromJsonAsync<ChatMessageModel>();
-                return responseModel?.Content ?? message;
-            }
+                ConversationId = model.Id,
+                Messages = model.Messages
+                    .Where(m => m.Role.ToLowerInvariant() != "system")
+                    .Select(m => new ChatMessageRequestModel
+                    {
+                        Id = m.Id,
+                        Content = m.Content,
+                        Role = m.Role,
+                    }).ToList(),
+            };
+            
+            HttpResponseMessage response = await chatClient.PostAsJsonAsync("api/v1/chat/update", request);
+            return response.IsSuccessStatusCode;
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
         }
-        
-        return message;
+        return false;
     }
 }
 
@@ -97,5 +107,5 @@ public interface IChatClient
     Task<List<ConversationModel>> GetConversationsAsync();
     Task<ConversationModel?> GetConversationByIdAsync(string conversationId);
     Task<ConversationModel?> GenerateAsync(ConversationModel conversation);
-    Task<string> GenerateTitleAsync(string conversationId, string message);
+    Task<bool> UpdateConversationAsync(ConversationModel model);
 }

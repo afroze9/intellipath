@@ -12,12 +12,12 @@ public static class ChatMessageRoleExtensions
 {
     public static ChatMessageRole ToChatMessageRole(this string role)
     {
-        return role switch
+        return role.ToLowerInvariant() switch
         {
-            "System" => ChatMessageRole.System,
-            "User" => ChatMessageRole.User,
-            "Assistant" => ChatMessageRole.Assistant,
-            "Tool" => ChatMessageRole.Tool,
+            "system" => ChatMessageRole.System,
+            "user" => ChatMessageRole.User,
+            "assistant" => ChatMessageRole.Assistant,
+            "tool" => ChatMessageRole.Tool,
             _ => throw new ArgumentException($"Invalid role: {role}"),
         };
     }

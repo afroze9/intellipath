@@ -18,10 +18,10 @@ public static class ChatEndpoints
             .WithTags(Tag)
             .WithName("Generate");
         
-        endpoints.MapPost(BasePath + "/title", GenerateTitleAsync)
-            .Produces<ChatMessageModel>()
+        endpoints.MapPost($"{BasePath}/update", UpdateConversation)
+            .Produces<bool>()
             .WithTags(Tag)
-            .WithName("GenerateTitle");
+            .WithName("UpdateConversation");
         
         endpoints.MapGet(BasePath + "/conversation", GetConversationsAsync)
             .Produces<List<ConversationModel>>()
@@ -38,17 +38,16 @@ public static class ChatEndpoints
         [FromBody] CreateConversationRequestModel request,
         IChatService chatService)
     {
-        ConversationModel result = await chatService.Generate(request.ToCreateConversationRequest());
-        return Results.Ok(result);
+        ConversationModel? result = await chatService.Generate(request.ToCreateConversationRequest());
+        return result == null ? Results.InternalServerError() : Results.Ok(result);
     }
     
-    private static async Task<IResult> GenerateTitleAsync(
-        [FromQuery] string conversationId,
-        [FromBody] string message,
+    private static async Task<IResult> UpdateConversation(
+        [FromBody] UpdateConversationRequestModel model,
         IChatService chatService)
     {
-        ChatMessageModel result = await chatService.GenerateTitle(conversationId, message);
-        return Results.Ok(result);
+        bool result = await chatService.UpdateConversation(model.ToUpdateConversationRequest());
+        return result ? Results.Ok() : Results.BadRequest();
     }
     
     private static async Task<IResult> GetConversationsAsync(IChatService chatService)

@@ -1,9 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace IntelliPath.Orchestrator.Entities;
 
-public class Conversation
+public class Conversation : EntityBase
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    [Required]
+    [MaxLength(255)]
+    public string Title { get; set; } = string.Empty;
     public List<ChatMessage> Messages { get; set; } = [];
-    public string? Title { get; set; }
 }

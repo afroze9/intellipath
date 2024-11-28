@@ -3,12 +3,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace IntelliPath.Orchestrator.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+public class ApplicationDbContext(
+    DbContextOptions<ApplicationDbContext> options,
+    AuditableEntitySaveChangesInterceptor saveChangesInterceptor) : DbContext(options)
 {
     public DbSet<ChatMessage> Messages { get; set; }
+
     public DbSet<Conversation> Conversations { get; set; }
+
     public DbSet<MemoryTag> MemoryTags { get; set; }
-    
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.AddInterceptors(saveChangesInterceptor);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -23,5 +33,4 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new MemoryTag { Id = Guid.Parse("305E4FEB-3C13-499E-B4D8-483BE516725A"), Name = "Projects" }
         );
     }
-    
 }

@@ -29,7 +29,7 @@ builder.Services
     .AddKernel();
 
 builder.Services.AddHttpContextAccessor();
-
+builder.Services.AddScoped<AuditableEntitySaveChangesInterceptor>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));

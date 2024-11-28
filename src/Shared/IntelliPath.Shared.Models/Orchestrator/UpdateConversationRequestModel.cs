@@ -1,7 +1,8 @@
 namespace IntelliPath.Shared.Models.Orchestrator;
 
-public class CreateConversationRequestModel
+public class UpdateConversationRequestModel
 {
-    public string? ConversationId { get; set; }
+    public required string ConversationId { get; set; }
+    
     public List<ChatMessageRequestModel> Messages { get; set; } = [];
 }

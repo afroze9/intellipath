@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IntelliPath.Orchestrator.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241126120102_Init")]
+    [Migration("20241128151547_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -22,17 +22,21 @@ namespace IntelliPath.Orchestrator.Data.Migrations
 
             modelBuilder.Entity("IntelliPath.Orchestrator.Entities.ChatMessage", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("ConversationId")
+                    b.Property<Guid>("ConversationId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ModifiedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Role")
@@ -47,13 +51,19 @@ namespace IntelliPath.Orchestrator.Data.Migrations
 
             modelBuilder.Entity("IntelliPath.Orchestrator.Entities.Conversation", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -115,9 +125,13 @@ namespace IntelliPath.Orchestrator.Data.Migrations
 
             modelBuilder.Entity("IntelliPath.Orchestrator.Entities.ChatMessage", b =>
                 {
-                    b.HasOne("IntelliPath.Orchestrator.Entities.Conversation", null)
+                    b.HasOne("IntelliPath.Orchestrator.Entities.Conversation", "Conversation")
                         .WithMany("Messages")
-                        .HasForeignKey("ConversationId");
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("IntelliPath.Orchestrator.Entities.Conversation", b =>
